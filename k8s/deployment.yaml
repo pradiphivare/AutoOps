@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoops-backend
+  namespace: autoops
+  labels:
+    app: autoops
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: autoops
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: autoops
+        component: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: backend
+        image: autoops-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: autoops-secrets
+              key: supabase-url
+        - name: SUPABASE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: autoops-secrets
+              key: supabase-key
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: autoops-secrets
+              key: mongodb-uri
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoops-frontend
+  namespace: autoops
+  labels:
+    app: autoops
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: autoops
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: autoops
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: autoops-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5173
+          name: http
+          protocol: TCP
+        env:
+        - name: VITE_SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: autoops-secrets
+              key: supabase-url
+        - name: VITE_SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: autoops-secrets
+              key: supabase-anon-key
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

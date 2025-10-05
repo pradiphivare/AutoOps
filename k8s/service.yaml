@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: autoops-backend
+  namespace: autoops
+  labels:
+    app: autoops
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: autoops
+    component: backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: autoops-frontend
+  namespace: autoops
+  labels:
+    app: autoops
+    component: frontend
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 5173
+    protocol: TCP
+    name: http
+  selector:
+    app: autoops
+    component: frontend
